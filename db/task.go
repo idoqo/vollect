@@ -9,18 +9,21 @@ type TaskHandler interface {
 	Handle() error
 }
 
-type Task struct {
-	id      int
-	status  string `json:"status"`
-	Handler TaskHandler
+var JobHandlers = make(map[string]TaskHandler)
 
-	payload []byte
+type Task struct {
+	Id      int
+	Name 	string
+	Status  string `json:"status"`
+	Handler TaskHandler
+	Payload []byte
 	db Database
 }
 
 func NewTask(name string, database Database, taskHandler TaskHandler) (*Task, error) {
 	task := &Task{
-		status: "pending",
+		Name: name,
+		Status: "pending",
 		Handler: taskHandler,
 		db: database,
 	}
@@ -30,18 +33,22 @@ func NewTask(name string, database Database, taskHandler TaskHandler) (*Task, er
 	if err != nil {
 		return nil, err
 	}
-	task.payload = payload
+	task.Payload = payload
 	return task, nil
 }
 
 func (t *Task) Queue() error {
+	if _, exists := JobHandlers[t.Name]; !exists {
+		JobHandlers[t.Name] = t.Handler
+	}
+
 	var id int
 	query := "INSERT INTO vollect_tasks (name, payload, status) VALUES ($1, $2, $3) RETURNING id"
-	err := t.db.Conn.QueryRow(query, "default", t.payload, t.status).Scan(&id)
+	err := t.db.Conn.QueryRow(query, t.Name, t.Payload, t.Status).Scan(&id)
 	if err != nil {
 		return err
 	}
-	t.id = id
+	t.Id = id
 	return nil
 }
 

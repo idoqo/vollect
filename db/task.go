@@ -36,8 +36,8 @@ func NewTask(name string, database Database, taskHandler TaskHandler) (*Task, er
 
 func (t *Task) Queue() error {
 	var id int
-	query := "INSERT INTO tasks (payload, status) VALUES ($1, $2) RETURNING id"
-	err := t.db.Conn.QueryRow(query, t.payload, t.status).Scan(&id)
+	query := "INSERT INTO vollect_tasks (name, payload, status) VALUES ($1, $2, $3) RETURNING id"
+	err := t.db.Conn.QueryRow(query, "default", t.payload, t.status).Scan(&id)
 	if err != nil {
 		return err
 	}

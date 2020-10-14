@@ -20,7 +20,7 @@ type csvParser struct {
 	currentRow int
 }
 
-func (c *csvParser) Handle(pause chan int) error {
+func (c *csvParser) Handle(pause, terminate chan int) error {
 	file, err := os.Open(c.filename)
 	if err != nil {
 		return err
@@ -30,6 +30,9 @@ func (c *csvParser) Handle(pause chan int) error {
 		select {
 		case <-pause:
 			log.Println("pausing csv parser :D")
+			return nil
+		case <-terminate:
+			log.Println("terminating csv parser :D")
 			return nil
 		default:
 			//the built-in csv doesn't support jumping to a specific row,

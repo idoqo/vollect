@@ -80,3 +80,4 @@ Terminated tasks get removed from the database entirely.
 
 
 
+<small>I've learnt so much from this project, and now I know that implementing your own queue is probably not a good idea haha</small>

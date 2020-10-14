@@ -7,14 +7,11 @@ import (
 )
 
 type TaskHandler interface {
-	Handle(pause chan int) error
+	Handle(pause, terminate chan int) error
 	OnPause() (state map[string]interface{}, err error)
 	OnResume(state map[string]interface{}) error
 }
-const (
-	PausedStatus = "paused"
-	PendingStatus = "pending"
-)
+
 var JobHandlers = make(map[string]TaskHandler)
 
 type Task struct {
@@ -28,7 +25,7 @@ type Task struct {
 func NewTask(name string, taskHandler TaskHandler) (*Task, error) {
 	task := &Task{
 		Name: name,
-		Status: PendingStatus,
+		Status: "pending",
 		Handler: taskHandler,
 	}
 	p := make(map[string]interface{})

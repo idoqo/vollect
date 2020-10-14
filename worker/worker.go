@@ -17,7 +17,8 @@ type Worker struct {
 	RunningJobs map[int]db.Task
 	StopChan chan bool
 
-	pause chan int
+	pause chan int // used to signal to handlers to pause their running tasks
+	terminate chan int //used to signal to handlers to stop their running tasks
 }
 
 func NewWorker(database db.Database) *Worker {
@@ -26,6 +27,7 @@ func NewWorker(database db.Database) *Worker {
 		pollInterval: 5 * time.Second,
 		RunningJobs: make(map[int]db.Task),
 		pause: make(chan int),
+		terminate: make(chan int),
 	}
 	return w
 }
@@ -75,7 +77,7 @@ func (w *Worker) NextJob() (run bool, err error) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		err = handler.Handle(w.pause)
+		err = handler.Handle(w.pause, w.terminate)
 	}()
 	wg.Wait()
 	return true, err
@@ -111,6 +113,15 @@ func (w *Worker) Pause(taskId int) error {
 	}
 	err = t.Pause(w.db)
 	return err
+}
+
+func (w *Worker) Stop(taskId int) error {
+	_, exists := w.RunningJobs[taskId]
+	if exists {
+		w.terminate <- 1
+	}
+	// if the job is not running, simply update the state so it doesn't get executed in the next run
+	return db.DeleteTask(w.db, taskId)
 }
 
 func (w *Worker) Resume(taskId int) error {

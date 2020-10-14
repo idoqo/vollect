@@ -17,11 +17,14 @@ type counter struct {
 	step int
 }
 
-func (c *counter) Handle(pause chan int) error {
+func (c *counter) Handle(pause, terminate chan int) error {
 	for c.current <= 1500 {
 		select {
 		case <-pause:
-			log.Println("pausing :D")
+			log.Println("pausing counter :D")
+			return nil
+		case <-terminate:
+			log.Println("stopping counter :D")
 			return nil
 		default:
 			log.Println(c.current)

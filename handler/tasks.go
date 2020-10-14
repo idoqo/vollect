@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
-	"gitlab.com/idoko/vollect/db"
 	"gitlab.com/idoko/vollect/response"
 	"net/http"
 	"strconv"
@@ -49,7 +48,7 @@ func resumeTask(w http.ResponseWriter, r *http.Request) {
 
 func terminateTask(w http.ResponseWriter, r *http.Request) {
 	taskId := r.Context().Value(taskIdKey).(int)
-	err := db.DeleteTask(dbInstance, taskId)
+	err := queueWorker.Stop(taskId)
 	if err != nil {
 		render.Render(w, r, response.ErrBadRequest(err))
 	}

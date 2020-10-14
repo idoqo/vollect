@@ -34,6 +34,7 @@ func NewHandler(database db.Database, wk *worker.Worker) http.Handler {
 	r.NotFound(notFoundHandler)
 	r.Route("/tasks", tasks)
 	r.Route("/counter", counters)
+	r.Route("/csv", csvRoute)
 	r.Get("/", index)
 	return r
 }

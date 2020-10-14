@@ -22,6 +22,15 @@ func (e *ErrorResponse) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
 }
 
+func ErrServerError(err error) *ErrorResponse {
+	return &ErrorResponse{
+		Err: err,
+		StatusCode: 500,
+		StatusText: "Internal server error",
+		Message: err.Error(),
+	}
+}
+
 func ErrBadRequest(err error) *ErrorResponse {
 	return &ErrorResponse{
 		Err: err,

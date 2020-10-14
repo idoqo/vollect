@@ -3,7 +3,6 @@ package db
 import (
 	"encoding/json"
 	"errors"
-	"log"
 	"net/http"
 )
 
@@ -49,12 +48,25 @@ func (t *Task) Pause() error {
 	if t.db.Conn == nil {
 		err = errors.New("no available connection to database")
 	}
-	log.Printf("%v\n", t)
 	query := `UPDATE vollect_tasks
 		SET payload = $1, status = $2 WHERE id = $3 
 		RETURNING id, name, payload, status`
 	_, err = t.db.Conn.Exec(query, t.Payload, "paused", t.Id)
 
+	return err
+}
+
+func PauseTask(db Database, taskId int) error {
+	query := `UPDATE vollect_tasks
+		SET status = $2 WHERE id = $3 
+		RETURNING id, name, payload, status`
+	_, err := db.Conn.Exec(query, "paused", taskId)
+	return err
+}
+
+func DeleteTask(db Database, taskId int) error {
+	query := `DELETE FROM vollect_tasks WHERE id = $1`
+	_, err := db.Conn.Exec(query, taskId)
 	return err
 }
 

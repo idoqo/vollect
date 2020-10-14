@@ -22,8 +22,8 @@ func (c *counter) Handle(pause chan int) error {
 			log.Println("pausing :D")
 			return nil
 		default:
-			c.current += c.step
 			log.Println(c.current)
+			c.current += c.step
 			time.Sleep(3 * time.Second)
 		}
 	}

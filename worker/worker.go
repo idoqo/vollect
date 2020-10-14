@@ -83,7 +83,8 @@ func (w *Worker) NextJob() (run bool, err error) {
 func (w *Worker) Pause(taskId int) error {
 	t, exists := w.RunningJobs[taskId]
 	if !exists {
-		return errors.New(fmt.Sprintf("no running job was found with ID: %d", taskId))
+		// if the job is not running, simply update the state so it doesn't get executed in the next run
+		return db.PauseTask(w.db, taskId)
 	}
 	t.Handler, _ = db.JobHandlers[t.Name]
 	data, err := t.Handler.OnPause()
@@ -107,9 +108,12 @@ func (w *Worker) Pause(taskId int) error {
 		}
 	}
 	t.UseDB(w.db)
-	log.Println(t.Id)
-	log.Println(string(t.Payload))
-	return t.Pause()
+	err = t.Pause()
+	// somehow, the signal sent to the channel previously does not complete before NextJob()
+	// is called, as a result, the paused state is not recognized immediately.
+	// It's a mess for real, like this entire code :/
+	w.pause <- 2
+	return err
 }
 
 func (w *Worker) Resume(taskId int) error {

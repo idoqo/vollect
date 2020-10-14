@@ -111,3 +111,22 @@ func (w *Worker) Pause(taskId int) error {
 	log.Println(string(t.Payload))
 	return t.Pause()
 }
+
+func (w *Worker) Resume(taskId int) error {
+	var exists bool
+	taskInfo, err := db.GetPausedTask(w.db, taskId)
+	if err != nil {
+		return err
+	}
+	taskInfo.Handler, exists = db.JobHandlers[taskInfo.Name]
+	if !exists {
+		return errors.New("handler not found. you may have to restart the task")
+	}
+	mp := make(map[string]interface{})
+	json.Unmarshal(taskInfo.Payload, &mp)
+	err = taskInfo.Handler.OnResume(mp)
+	if err != nil {
+		return err
+	}
+	return taskInfo.Resume()
+}

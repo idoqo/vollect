@@ -36,6 +36,15 @@ func (c *counter) OnPause() (state map[string]interface{}, err error) {
 	return state, nil
 }
 
+func (c *counter) OnResume(state map[string]interface{}) error {
+	current, exists := state["current"]
+	log.Println(current)
+	if exists {
+		c.current = int(current.(float64))
+	}
+	return nil
+}
+
 func counters(r chi.Router) {
 	r.Get("/", createCounter)
 }

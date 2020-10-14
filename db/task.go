@@ -10,6 +10,7 @@ import (
 type TaskHandler interface {
 	Handle(pause chan int) error
 	OnPause() (state map[string]interface{}, err error)
+	OnResume(state map[string]interface{}) error
 }
 const (
 	PausedStatus = "paused"
@@ -55,6 +56,21 @@ func (t *Task) Pause() error {
 	_, err = t.db.Conn.Exec(query, t.Payload, "paused", t.Id)
 
 	return err
+}
+
+func (t *Task) Resume() error {
+	query := `UPDATE vollect_tasks SET status = $1 WHERE id = $2`
+	_, err := t.db.Conn.Exec(query, "pending", t.Id)
+	return err
+}
+
+func GetPausedTask(database Database, taskId int) (*Task, error) {
+	task := &Task{db: database}
+	query := `SELECT id, name, payload, status FROM vollect_tasks
+				WHERE status = $1 AND id = $2`
+	row := database.Conn.QueryRow(query, "paused", taskId)
+	err := row.Scan(&task.Id, &task.Name, &task.Payload, &task.Status)
+	return task, err
 }
 
 func (t *Task) Queue() error {

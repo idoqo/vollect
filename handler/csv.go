@@ -106,11 +106,11 @@ func createImportTask(csvFile string) (*db.Task, error) {
 		filename: csvFile,
 		currentRow: 0,
 	}
-	task, err := db.NewTask(taskName, dbInstance, parser)
+	task, err := db.NewTask(taskName, parser)
 	if err != nil {
 		return task, err
 	}
-	err = task.Queue()
+	err = task.Queue(dbInstance)
 	return task, err
 }
 

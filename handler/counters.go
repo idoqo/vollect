@@ -1,11 +1,13 @@
 package handler
 
 import (
+	"fmt"
 	"github.com/go-chi/chi"
 	"github.com/go-chi/render"
 	"gitlab.com/idoko/vollect/db"
 	"gitlab.com/idoko/vollect/response"
 	"log"
+	"math/rand"
 	"net/http"
 	"time"
 )
@@ -51,14 +53,17 @@ func counters(r chi.Router) {
 
 func createCounter(w http.ResponseWriter, r *http.Request) {
 	c := &counter{current: 1, step: 1}
-	tsk, err := db.NewTask("counter", dbInstance, c)
+	rand.Seed(time.Now().UnixNano())
+	name := randSeq(20)
+	tsk, err := db.NewTask(name, c)
 	if err != nil {
 		render.Render(w, r, &response.ErrorResponse{Err: err, StatusCode: 500, Message: err.Error()})
 		return
 	}
-	if err := tsk.Queue(); err != nil {
+	if err := tsk.Queue(dbInstance); err != nil {
 		render.Render(w, r, &response.ErrorResponse{Err: err, StatusCode: 500, Message: err.Error()})
 	}
+	render.Render(w, r, &defaultMessage{Message: fmt.Sprintf("counter created. Task ID is %d", tsk.Id)})
 	return
 }
 

@@ -38,11 +38,10 @@ func (w *Worker) Run() error {
 		default:
 			if run, err := w.NextJob(); err != nil {
 				log.Println(err.Error())
-				//todo mark job as error so it skips the next time
 			} else if !run {
 				// no job was found, take a nap
-				time.Sleep(w.pollInterval)
 			}
+			time.Sleep(w.pollInterval)
 		}
 	}
 }
@@ -67,6 +66,8 @@ func (w *Worker) NextJob() (run bool, err error) {
 	//defer task.Done()
 	handler, exists := db.JobHandlers[task.Name]
 	if !exists {
+		// mark as failed so it doesn't get executed again
+		db.FailTask(w.db, task.Id)
 		return false, fmt.Errorf("no handler defined for %s", task.Name)
 	}
 	w.RunningJobs[task.Id] = task
@@ -84,7 +85,8 @@ func (w *Worker) Pause(taskId int) error {
 	t, exists := w.RunningJobs[taskId]
 	if !exists {
 		// if the job is not running, simply update the state so it doesn't get executed in the next run
-		return db.PauseTask(w.db, taskId)
+		//return db.PauseTask(w.db, taskId)
+		return errors.New(fmt.Sprintf("no running job found with ID: %d", taskId))
 	}
 	t.Handler, _ = db.JobHandlers[t.Name]
 	data, err := t.Handler.OnPause()
@@ -107,12 +109,7 @@ func (w *Worker) Pause(taskId int) error {
 			return err
 		}
 	}
-	t.UseDB(w.db)
-	err = t.Pause()
-	// somehow, the signal sent to the channel previously does not complete before NextJob()
-	// is called, as a result, the paused state is not recognized immediately.
-	// It's a mess for real, like this entire code :/
-	w.pause <- 2
+	err = t.Pause(w.db)
 	return err
 }
 
@@ -132,5 +129,5 @@ func (w *Worker) Resume(taskId int) error {
 	if err != nil {
 		return err
 	}
-	return taskInfo.Resume()
+	return taskInfo.Resume(w.db)
 }

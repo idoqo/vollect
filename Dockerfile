@@ -4,7 +4,7 @@ COPY go.mod go.sum /go/src/gitlab.com/idoko/vollect/
 WORKDIR /go/src/gitlab.com/idoko/vollect
 RUN go mod download
 COPY . /go/src/gitlab.com/idoko/vollect
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o build/vollect gitlab.com/idoko/vollect
+RUN GOOS=linux go build -o build/vollect gitlab.com/idoko/vollect
 
 FROM alpine
 

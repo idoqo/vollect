@@ -32,15 +32,18 @@ func main()  {
 	}
 	defer database.Conn.Close()
 
-	httpHandler := handler.NewHandler(database)
+	wk := worker.NewWorker(database)
+	go func() {
+		_ = wk.Run()
+	}()
+
+	httpHandler := handler.NewHandler(database, wk)
 	server := &http.Server{
 		Handler: httpHandler,
 	}
 	go func() {
 		server.Serve(listener)
 	}()
-	wk := worker.NewWorker(database)
-	_ = wk.Run()
 	defer shutdown(server)
 
 	log.Printf("Started server on %s", addr)

@@ -2,13 +2,19 @@ package db
 
 import (
 	"encoding/json"
+	"errors"
+	"log"
 	"net/http"
 )
 
 type TaskHandler interface {
-	Handle() error
+	Handle(pause chan int) error
+	OnPause() (state map[string]interface{}, err error)
 }
-
+const (
+	PausedStatus = "paused"
+	PendingStatus = "pending"
+)
 var JobHandlers = make(map[string]TaskHandler)
 
 type Task struct {
@@ -23,7 +29,7 @@ type Task struct {
 func NewTask(name string, database Database, taskHandler TaskHandler) (*Task, error) {
 	task := &Task{
 		Name: name,
-		Status: "pending",
+		Status: PendingStatus,
 		Handler: taskHandler,
 		db: database,
 	}
@@ -35,6 +41,20 @@ func NewTask(name string, database Database, taskHandler TaskHandler) (*Task, er
 	}
 	task.Payload = payload
 	return task, nil
+}
+
+func (t *Task) Pause() error {
+	var err error
+	if t.db.Conn == nil {
+		err = errors.New("no available connection to database")
+	}
+	log.Printf("%v\n", t)
+	query := `UPDATE vollect_tasks
+		SET payload = $1, status = $2 WHERE id = $3 
+		RETURNING id, name, payload, status`
+	_, err = t.db.Conn.Exec(query, t.Payload, "paused", t.Id)
+
+	return err
 }
 
 func (t *Task) Queue() error {
@@ -50,6 +70,10 @@ func (t *Task) Queue() error {
 	}
 	t.Id = id
 	return nil
+}
+
+func (t *Task) UseDB(database Database) {
+	t.db = database
 }
 
 func (t *Task) Render(w http.ResponseWriter, r *http.Request) error {

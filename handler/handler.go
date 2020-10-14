@@ -5,6 +5,7 @@ import (
 	"github.com/go-chi/render"
 	"gitlab.com/idoko/vollect/db"
 	"gitlab.com/idoko/vollect/response"
+	"gitlab.com/idoko/vollect/worker"
 	"net/http"
 )
 
@@ -12,7 +13,10 @@ type defaultMessage struct {
 	Message string `json:"message"`
 }
 
-var dbInstance db.Database
+var (
+	dbInstance db.Database
+	queueWorker *worker.Worker
+)
 
 func (dm *defaultMessage) Render(w http.ResponseWriter, r *http.Request) error {
 	return nil
@@ -22,8 +26,9 @@ func (dm *defaultMessage) Bind(r *http.Request) error {
 	return nil
 }
 
-func NewHandler(database db.Database) http.Handler {
+func NewHandler(database db.Database, wk *worker.Worker) http.Handler {
 	dbInstance = database
+	queueWorker = wk
 	r := chi.NewRouter()
 	r.MethodNotAllowed(notAllowedHandler)
 	r.NotFound(notFoundHandler)

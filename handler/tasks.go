@@ -14,13 +14,13 @@ var taskIdKey = "taskId"
 
 func tasks(r chi.Router) {
 	r.Get("/", getAllTasks)
-	r.Post("/pause", pauseTask)
 	r.Post("/resume", resumeTask)
 	r.Post("/terminate", terminateTask)
 
 	r.Route("/{taskId}", func (r chi.Router) {
 		r.Use(TaskContext)
 		r.Get("/", getTask)
+		r.Post("/pause", pauseTask)
 	})
 }
 
@@ -28,7 +28,14 @@ func getAllTasks(w http.ResponseWriter, r *http.Request) {}
 
 func getTask(w http.ResponseWriter, r *http.Request) {}
 
-func pauseTask(w http.ResponseWriter, r *http.Request) {}
+func pauseTask(w http.ResponseWriter, r *http.Request) {
+	taskId :=r.Context().Value(taskIdKey).(int)
+	err := queueWorker.Pause(taskId)
+	if err != nil {
+		render.Render(w, r, response.ErrBadRequest(err))
+	}
+	return
+}
 
 func resumeTask(w http.ResponseWriter, r *http.Request) {}
 

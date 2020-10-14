@@ -25,12 +25,6 @@ You should get a response that includes the ID of the created task e.g:
 ```
 
 ## Endpoints
-### Get All Tasks
-This returns a list of all the jobs in the queue (both pending, running and paused).
-#### Url
-`/tasks`
-#### Response
-
 ### Pause a Task
 Pauses a given task using its ID. 
 #### Url

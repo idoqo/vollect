@@ -47,8 +47,10 @@ The response is a 200 OK header with an empty body.
 The response is a 200 OK header with an empty body.
 
 ## How it works
-The _queue_ contains *Tasks* which are saved to a PostgreSQL database. The tasks are run sequentially
- that is, only one task is running at a given time. A task has:
+The _queue_ comprise of _Tasks_ which are stored in a PostgreSQL database. Tasks are run sequentially
+ that is, only one task is running at a given time. It also uses PgSQL's "SKIP
+ LOCK" feature as a database-level guard against executing a task more than
+ once. Each task implementation has:
 
 - ID: The task ID in the database
 - Name: A random name for the task, should be unique.
